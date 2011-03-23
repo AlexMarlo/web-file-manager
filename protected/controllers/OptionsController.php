@@ -66,10 +66,10 @@ class OptionsController extends CController
         $sql='Select rootdir From rootdir';
         $command=Yii::app()->db->createCommand($sql);
         $dataReader=$command->query();
-        foreach($dataReader as $row){
+        foreach($dataReader as $row)
             $rd="$row[rootdir]";
-        }
-        return $rd;        
+
+        return $rd;
     }
 
     private function setRoot($root)

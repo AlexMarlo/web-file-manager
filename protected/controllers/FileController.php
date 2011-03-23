@@ -85,47 +85,46 @@ class FileController extends CController
 
   private function itemInZip($arch,$fPath,$fInZip)
   {
-      if(is_file($fInZip))
-      {
-        $arch->addFile($fInZip,str_replace($fPath, '', $fInZip));
-      }
-      elseif(is_dir($fInZip))
-      {
-        //$arch->addEmptyDir($FPath);
-        if ($fPath[1]<>':')
-          $arch->addEmptyDir(str_replace(dirname($fPath), '', $fPath));
+    if(is_file($fInZip))
+    {
+      $arch->addFile($fInZip,str_replace($fPath, '', $fInZip));
+    }
+    elseif(is_dir($fInZip))
+    {
+      //$arch->addEmptyDir($FPath);
+      if ($fPath[1]<>':')
+        $arch->addEmptyDir(str_replace(dirname($fPath), '', $fPath));
 
-        $scr = scandir($fInZip);
-        array_shift($scr);
-        array_shift($scr);
+      $scr = scandir($fInZip);
+      array_shift($scr);
+      array_shift($scr);
 
-        foreach($scr as $i)
-          $this->itemInZip($arch, $fPath, $fInZip . $i . (is_dir($fInZip.$i)? '/': ''));
-      }
-      
+      foreach($scr as $i)
+        $this->itemInZip($arch, $fPath, $fInZip . $i . (is_dir($fInZip.$i)? '/': ''));
+    }
   }
 
   private function getRoot()
   {
-    $sql = 'SELECT rootdir FROM rootdir';
+    $sql = 'SELECT rootdir FROM rootdir;';
 
     $command = Yii :: app()->db->createCommand($sql);
     $dataReader = $command->query();
-    
+
     foreach($dataReader as $row)
       $rd = "$row[rootdir]";
 
     if(file_exists($rd))
-      return $rd;
+      return realpath($rd);
     else
-      return dirname(__FILE__) . '/user_work_directories/default';
+      return dirname(__FILE__) . '/../../user_work_directories/default';
   }
 
   private function makeFile($fName)
   {
     if(!file_exists($fName))
     {
-      $this->file=fopen($fName,'w+');
+      $this->file = fopen($fName, 'w+');
       fclose($this->file);
     }
   }
@@ -184,49 +183,46 @@ class FileController extends CController
       rmdir($what);
     }
 
-    return(0);          
+    return(0);
   }
 
   private function download($what)
-  {            
-      if(is_file($what)){
-          header("Content-Length: ".filesize($what));
-          header("Content-Disposition: attachment; filename=".$what); 
-          header("Content-Type: application/x-force-download; name=\"".$what."\"");
-          readfile($what);
-      }else{
-          if(is_dir($what)){
-              $this->zipping($what.".zip",$what);
-              //$pathToDownload=realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_POST['answer']));
-              
-              
-              header("Content-Length: ".filesize($what.".zip"));
-              header("Content-Disposition: attachment; filename=".$what.".zip"); 
-              header("Content-Type: application/x-force-download; name=\"".$what.".zip"."\"");
-              readfile($what.".zip");
-              $this->delete($what.".zip");
-          };
-      }    
+  {
+    if(is_file($what))
+    {
+      header("Content-Length: ".filesize($what));
+      header("Content-Disposition: attachment; filename=".$what); 
+      header("Content-Type: application/x-force-download; name=\"".$what."\"");
+      readfile($what);
+    }
+    else
+    {
+      if(is_dir($what))
+      {
+        $this->zipping($what.".zip",$what);
+        //$pathToDownload=realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_POST['answer']));
+
+        header("Content-Length: ".filesize($what.".zip"));
+        header("Content-Disposition: attachment; filename=".$what.".zip"); 
+        header("Content-Type: application/x-force-download; name=\"".$what.".zip"."\"");
+        readfile($what.".zip");
+        $this->delete($what.".zip");
+      }
+    }
   }
 
   private function dir($what)
   {
-          $scr=scandir($what);
-          //array_shift($scr);
-          //array_shift($scr);
-          return($scr);
+    $scr=scandir($what);
+    //array_shift($scr);
+    //array_shift($scr);
+    return($scr);
   }
 
   public function actionManager()
   {
-    $tmp = realpath($this->getRoot());
-    $tmp = dirname(__FILE__) . '/../../user_work_directories/default';
+    $tmp = $this->getRoot();
 
-    /*
-    if(isset($_POST['path'])){$_GET['path']=$_POST['path'];};
-    if(isset($_POST['path2'])){$_GET['path2']=$_POST['path2'];};
-    if(isset($_POST['panel'])){$_GET['panel']=$_POST['panel'];};
-    */    
     if (!isset($_GET['path']))
       $scandir=$tmp;
     else
@@ -247,9 +243,13 @@ class FileController extends CController
       $scandir2 = $tmp.$scandir2;
       $scandir2 = str_replace("/","\\",$scandir2);
     }
-        
-    $scandir=realpath($scandir); 
-    $scandir2=realpath($scandir2);
+
+    $scandir = str_replace("\\", DIRECTORY_SEPARATOR, $scandir);
+    $scandir2 = str_replace("\\", DIRECTORY_SEPARATOR, $scandir2);
+    $tmp = str_replace("\\", DIRECTORY_SEPARATOR, $tmp);
+
+    $scandir = realpath($scandir); 
+    $scandir2 = realpath($scandir2);
 
     if(substr_count($scandir, $tmp) < 1)
       $scandir = $tmp;
@@ -260,8 +260,6 @@ class FileController extends CController
     $tree = $this->dir($scandir);
     $tree2 = $this->dir($scandir2);
 
-    $scandir = str_replace("\\", DIRECTORY_SEPARATOR, $scandir);
-    $scandir2 = str_replace("\\", DIRECTORY_SEPARATOR, $scandir2);
 
     if(in_array('XMLHttpRequest', $_SERVER))
     {
@@ -279,128 +277,138 @@ class FileController extends CController
     }
     else
     {
-      $this->render('manager',array(  'tree'=>$tree,'p'=>$scandir,'len'=>strlen($tmp),
-                    'tree2'=>$tree2,'p2'=>$scandir2,'len2'=>strlen($tmp),));
+      $this->render('manager', array('tree' => $tree, 'p' => $scandir, 'len' => strlen($tmp),
+                    'tree2' => $tree2,'p2' => $scandir2,'len2' => strlen($tmp), ));
     }
   }
 
     public function actionDelete()
     {
-        if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
-            $this->delete(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
-        }
+      if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+        if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
+        $this->delete(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
+      }
     }
 
     public function actionCopy()
     {
-        if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            $this->copy(
-                realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])),
-                realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['pathTo'])));
-        }
+      if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+        $this->copy(
+            realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])),
+            realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['pathTo'])));
+      }
     }
 
     public function actionMkDir()
     {
-        if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
-            $this->makeDir(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
-        }
+      if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+        if($this->unicodeUrlDecode($_GET['path'])=='')
+          exit;
+
+        $this->makeDir(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
+      }
     }
 
     public function actionMkFile()
     {
-        if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
-            $this->makeFile(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
-        }
+      if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+          if($this->unicodeUrlDecode($_GET['path'])=='')
+            exit;
+
+          $this->makeFile(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
+      }
     }
 
     public function actionMove()
     {
-        if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            $this->move(
-                realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])),
-                realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['pathTo'])));
-        }
+      if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+        $this->move(
+            realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])),
+            realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['pathTo'])));
+      }
     }
 
     public function actionUpload()
     {
-        //if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
-        {
-            $pathToUpload=realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_POST['answer']));
-            $error = "";
-            $msg = "";
-            $fileElementName = 'fileToUpload';
-            $i = 0;
-            $files_count = sizeof($_FILES[$fileElementName]["name"]);
+      //if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+      {
+        $pathToUpload=realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_POST['answer']));
+        $error = "";
+        $msg = "";
+        $fileElementName = 'fileToUpload';
+        $i = 0;
+        $files_count = sizeof($_FILES[$fileElementName]["name"]);
 
-            for ($i = 0; $i < $files_count-1; $i++) {	
-                if(!empty($_FILES[$fileElementName]['error'][$i])){
-                switch($_FILES[$fileElementName]['error'][$i]){
-                    case '1':
-                $error = 'size of uploaded file exceeds the specified parameter upload_max_filesize  in php.ini ';
-                        break;
-                    case '2':
-                        $error = 'size of uploaded file exceeds the specified parameter MAX_FILE_SIZE in HTML form ';
-                        break;
-                    case '3':
-                        $error = 'loaded only part of the file';
-                        break;
-                    case '4':
-                        $error = 'file was not loaded (in the form of user entered an incorrect path). ';
-                        break;
-                    case '6':
-                        $error = 'Bad temporary a directory';
-                        break;
-                    case '7':
-                        $error = 'error writing the file to disk';
-                        break;
-                    case '8':
-                        $error = 'File Download interrupted';
-                        break;
-                    case '999':
-                    default:
-                        $error = 'No error code avaiable';
-                }
-                }elseif(empty($_FILES[$fileElementName]['tmp_name'][$i]) || $_FILES[$fileElementName]['tmp_name'][$i] == 'none'){
-                $error = 'No file was uploaded..';
-                }else{
-                    if (file_exists($pathToUpload . $_FILES[$fileElementName]['name'][$i])){
-                  $error =$_FILES[$fileElementName]['name'][$i] . " óæå ñóùåñòâóåò. ";
-                  }else{
-                        $msg .= " File Name: " . $_FILES[$fileElementName]['name'][$i]."<br/>";
-                        $msg .= " File Type: " . $_FILES[$fileElementName]['type'][$i]."<br/>";
-                        $msg .= " File Size: " . (@filesize($_FILES[$fileElementName]['tmp_name'][$i])/ 1024)."Kb";
-                        move_uploaded_file($_FILES[$fileElementName]['tmp_name'][$i], $pathToUpload . $_FILES[$fileElementName]['name'][$i]);
-                    }
-      //for security reason, we force to remove all uploaded file
-                    @unlink($_FILES[$fileElementName][$i]);		
-                }		                      
-                //echo "{";
-                //echo($error . "',\n");
-                //echo				"msg: '" . $msg . "'\n";
-                //echo "}";
-            }//end cicle copy files
-            //if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
-            //$this->download(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
-        }
+        for ($i = 0; $i < $files_count-1; $i++)
+        {
+          if(!empty($_FILES[$fileElementName]['error'][$i]))
+          {
+            switch($_FILES[$fileElementName]['error'][$i])
+            {
+              case '1':
+                  $error = 'size of uploaded file exceeds the specified parameter upload_max_filesize  in php.ini ';
+                  break;
+              case '2':
+                  $error = 'size of uploaded file exceeds the specified parameter MAX_FILE_SIZE in HTML form ';
+                  break;
+              case '3':
+                  $error = 'loaded only part of the file';
+                  break;
+              case '4':
+                  $error = 'file was not loaded (in the form of user entered an incorrect path). ';
+                  break;
+              case '6':
+                  $error = 'Bad temporary a directory';
+                  break;
+              case '7':
+                  $error = 'error writing the file to disk';
+                  break;
+              case '8':
+                  $error = 'File Download interrupted';
+                  break;
+              case '999':
+              default:
+                  $error = 'No error code avaiable';
+            }
+          }
+          elseif(empty($_FILES[$fileElementName]['tmp_name'][$i]) || $_FILES[$fileElementName]['tmp_name'][$i] == 'none')
+            $error = 'No file was uploaded..';
+          else
+          {
+            if (file_exists($pathToUpload . $_FILES[$fileElementName]['name'][$i]))
+              $error =$_FILES[$fileElementName]['name'][$i] . " óæå ñóùåñòâóåò. ";
+            else
+            {
+              $msg .= " File Name: " . $_FILES[$fileElementName]['name'][$i]."<br/>";
+              $msg .= " File Type: " . $_FILES[$fileElementName]['type'][$i]."<br/>";
+              $msg .= " File Size: " . (@filesize($_FILES[$fileElementName]['tmp_name'][$i])/ 1024)."Kb";
+              move_uploaded_file($_FILES[$fileElementName]['tmp_name'][$i], $pathToUpload . $_FILES[$fileElementName]['name'][$i]);
+            }
+            //for security reason, we force to remove all uploaded file
+            @unlink($_FILES[$fileElementName][$i]);
+          }
+          //echo "{";
+          //echo($error . "',\n");
+          //echo  "msg: '" . $msg . "'\n";
+          //echo "}";
+        }//end cicle copy files
+        //if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
+        //$this->download(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
+      }
   }
     
   public function actionDownload()
   {
   //if($_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')
+    if($this->unicodeUrlDecode($_GET['path'])=='')
+      exit;
 
-      if($this->unicodeUrlDecode($_GET['path'])==''){exit;};            
-      $this->download(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
-        
-  }    
+    $this->download(realpath($this->getRoot()).str_replace("/","\\",$this->unicodeUrlDecode($_GET['path'])));
+  }
 }
 ?>

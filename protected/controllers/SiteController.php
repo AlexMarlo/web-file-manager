@@ -60,10 +60,10 @@ class SiteController extends CController
       $form->attributes=$_POST['LoginForm'];
       // validate user input and redirect to previous page if valid
       if($form->validate())
-        $this->redirect(Yii::app()->user->returnUrl);
+        $this->redirect(Yii :: app()->user->returnUrl);
     }
     // display the login form
-    $this->render('login',array('form'=>$form));
+    $this->render('login', array('form' => $form));
   }
 
   /**
@@ -78,11 +78,11 @@ class SiteController extends CController
 
   public function actionList()
   {
-        $tree=scandir($what);
-        array_shift($tree);
-        array_shift($tree);
+    $tree = scandir($what);
+    array_shift($tree);
+    array_shift($tree);
 
-    $this->render('list',array('tree'=>$tree,));
+    $this->render('list', array('tree' => $tree, ));
   }
  }
 
