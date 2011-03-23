@@ -1,2 +1,3 @@
-./user_work_directories/*
-./assets/*
+user_work_directories/*
+assets/*
+protected/runtime/*
