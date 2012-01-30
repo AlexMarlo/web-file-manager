@@ -28,7 +28,7 @@ class UserIdentity extends CUserIdentity
     $users1 = array(
       // username => password
       //'demo'=>'demo',
-      'admin'=>'secret'
+      'smartnlg'=>'dreamteam'
     );
 
     $users = $users1 + $users2;

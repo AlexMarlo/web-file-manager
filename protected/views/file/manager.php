@@ -258,7 +258,7 @@
     <script type="text/javascript">
       $(document).ready(function(){
         $('.MultiFile').MultiFile({ 
-            accept:'jpg|gif|bmp|png|doc|pdf|rtf|avi|mp3|wav|txt|docx|rar|zip', max:15, STRING: { 
+            accept:'jpg|gif|bmp|png|doc|pdf|rtf|avi|mp3|wav|txt|docx|rar|zip|xml|docx', max:15, STRING: { 
             remove:'delete',
             file:'$file', 
             selected:'Chuse: $file', 

@@ -1,10 +1,15 @@
 <p></p>
 <?php
+  $lroot = $p;
+  $lroot2 = $p2;
+ 
+/*
   $lroot = substr_replace($p, "", 0, $len);
   $lroot = str_replace("\\", "/", $lroot);
 
   $lroot2 = substr_replace($p2, "", 0, $len);
   $lroot2 = str_replace("\\", "/", $lroot2);
+*/
 
   if($panel == '1')
   {
@@ -32,7 +37,7 @@
   <?php
     foreach($tree as $i)
     {
-      $tmp=$p . '\\' . $i;
+      $tmp=$p . DIRECTORY_SEPARATOR . $i;
       
       if($panel == '1')
       {
