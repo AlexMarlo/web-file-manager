@@ -4,6 +4,13 @@ class FSService
 {
   public static function unicodeUrlDecode( $url, $encoding = 'CP1251')
   {
+    if( PHP_EOL == "\r\n") // WINDOWS
+      $encoding = 'CP1251';
+    elseif( PHP_EOL == "\n") // LINUX/UNIX
+      $encoding = 'UTF-8';
+    elseif( PHP_EOL == "\r\n") // MAC OS
+      $encoding = 'UTF-8';
+
     preg_match_all('/%u([[:xdigit:]]{4})/', $url, $a);
 
     foreach ($a[1] as $unicode)
@@ -25,7 +32,7 @@ class FSService
       chr(0x80 | (($num & 0xfc0) >> 6)) .
       chr(0x80 | ($num & 0x3f));
 
-      $str = iconv ("UTF-8", "$encoding", $str);
+      $str = iconv("UTF-8", "$encoding", $str);
       $url = str_replace ('%u'.$unicode, $str, $url);
     }
 
@@ -136,8 +143,10 @@ class FSService
 
   public static function download( $what)
   {
+    echo $what;
     if( is_file( $what))
     {
+    echo 1;
       header( "Content-Length: " . filesize( $what));
       header( "Content-Disposition: attachment; filename=" . $what); 
       header( "Content-Type: application/x-force-download; name=\"" . $what."\"");

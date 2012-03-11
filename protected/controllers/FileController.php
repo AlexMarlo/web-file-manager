@@ -228,10 +228,10 @@ class FileController extends CController
     
   public function actionDownload()
   {
-    if( FSService::unicodeUrlDecode($_GET['path'])=='')
+    if( FSService::unicodeUrlDecode($_GET['path']) == '')
       exit;
 
-    FSService::download( realpath($this->getRoot()).str_replace( "/", DIRECTORY_SEPARATOR, FSService::unicodeUrlDecode( $_GET['path'])));
+    FSService::download( FSService::unicodeUrlDecode($_GET['path']));
   }
 }
 ?>
